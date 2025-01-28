@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Check if a project name is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <project-name>"
+  exit 1
+fi
+
+PROJECT_NAME=$1
+
+# Generate a Maven quickstart project
+mvn archetype:generate \
+  -DgroupId=com.hindbiswas.$PROJECT_NAME \
+  -DartifactId=$PROJECT_NAME \
+  -DarchetypeArtifactId=maven-archetype-quickstart \
+  -DarchetypeVersion=1.4 \
+  -DinteractiveMode=false
+
+if [ $? -eq 0 ]; then
+  echo "Maven project '$PROJECT_NAME' created successfully."
+  # Copy the pom.xml from the resources folder
+  SCRIPT_DIR=$(dirname "$0")
+  RESOURCE_POM="$SCRIPT_DIR/resources/pom.xml"
+  TARGET_POM="$PROJECT_NAME/pom.xml"
+
+  if [ -f "$RESOURCE_POM" ]; then
+    cp "$RESOURCE_POM" "$TARGET_POM"
+    echo "Copied custom pom.xml to project directory."
+    # Replace instances of '$P' with the project name in the copied pom.xml
+    sed -i "s/\$P/$PROJECT_NAME/g" "$TARGET_POM"
+    echo "Updated placeholders in pom.xml with project name '$PROJECT_NAME'."
+  else
+    echo "No pom.xml found in resources folder. Skipping copy."
+  fi
+else
+  echo "Failed to create Maven project."
+fi
+
