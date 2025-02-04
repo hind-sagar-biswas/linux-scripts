@@ -2,6 +2,7 @@
 
 # Get the first argument
 if [ -z "$1" ]; then
+    # Else show help
     echo "Usage: javarun <filename>"
     exit 1
 fi
