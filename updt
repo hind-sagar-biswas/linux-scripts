@@ -7,3 +7,8 @@ brew update
 brew upgrade
 
 flatpak update
+
+sudo apt install --reinstall snapd
+sudo snap refresh
+
+sudo apt autoremove
