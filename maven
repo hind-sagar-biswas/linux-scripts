@@ -22,7 +22,7 @@ if [ $? -eq 0 ]; then
   SCRIPT_DIR=$(dirname "$0")
 
   RESOURCE_POM="$SCRIPT_DIR/resources/pom.xml"
-  RESOURCE_GITIGNORE="$SCRIPT_DIR/resources/.gitignore"
+  RESOURCE_GITIGNORE="$SCRIPT_DIR/resources/java.gitignore"
 
   TARGET_POM="$PROJECT_NAME/pom.xml"
   TARGET_GITIGNORE="$PROJECT_NAME/.gitignore"
