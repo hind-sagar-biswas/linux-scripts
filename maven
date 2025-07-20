@@ -58,7 +58,7 @@ if [ $? -eq 0 ]; then
   echo "Initialized Git repository and made initial commit."
 
 
-  mvn clean compile exec:test
+  mvn clean test
 
   # Ask if the user wants to open the project in Neovim
   read -p "Do you want to open the project in Neovim? (y/n): " open_in_nvim
