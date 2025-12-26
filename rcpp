@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# usage: run <filename> ...filenames
+# example: run filename0 filename1 filename2
+# this converts to: clang++ -Wall -std=c++20 -o ./target/filename0 ./src/filename0.cpp ./src/filename1.cpp ./src/filename2.cpp
+# at least one filename must be provided
+
+
+TRG="$PWD/target"
+SRC="$PWD/src"
+
+# Check if src directory exists
+if [ ! -d "$SRC" ]; then
+	echo "src directory does not exist."
+	exit 1
+fi
+
+# Check if any arguments are provided
+if [ "$#" -eq 0 ]; then
+	echo "No arguments provided. Please provide at least one filename."
+	echo "Usage: rcpp <filename> ...filenames"
+	exit 1
+fi
+
+# Get the first argument
+filename=$1
+
+# Check if all the provided filenames exists in src directory
+files=()
+for arg in "$@"; do
+	if [ ! -f "$PWD/src/$arg.cpp" ]; then
+		echo "File $arg.cpp does not exist in src directory."
+		exit 1
+	else
+		files+=("$PWD/src/$arg.cpp")
+	fi
+done
+
+# Check if target directory exists
+if [ ! -d "$PWD/target" ]; then
+	mkdir "$PWD/target"
+fi
+
+# Compile the files
+clang++ -Wall -std=c++20 -o "$PWD/target/$filename" "${files[@]}"
+
+# Run the executable
+"./target/$filename"
