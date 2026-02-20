@@ -95,9 +95,14 @@ cd "$TARGET_DIR"
 
 # --- Decision Phase ---
 
+RUN_SERVER=false
 RUN_DEV=false
 RUN_MAILPIT=false
 RUN_QUEUE=false
+
+if ask_choice "Run Artisan serve? (Y/n)" "y"; then
+    RUN_SERVER=true
+fi
 
 if [[ -f "package.json" ]]; then
     PKG_MGR=$(command -v bun &> /dev/null && echo "bun" || echo "npm")
@@ -137,7 +142,10 @@ if [ "$RUN_QUEUE" = true ]; then
 fi
 
 # Finally, run the server in the foreground of the current shell
-echo "---------------------------------------"
-echo "Starting Laravel Development Server..."
-php artisan serve
+if [ "$RUN_SERVER" = true ]; then
+    echo "---------------------------------------"
+    echo "Starting Laravel Development Server..."
+    php artisan serve
+fi
+
 

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+WALL_DIR="$HOME/Wallpapers"
+TARGET_WALL="$WALL_DIR/wall.jpg"
+TARGET_BLUR="$WALL_DIR/wall_blur.jpg"
+
+cd "$WALL_DIR" || exit 1
+
+FILE_LIST=""
+for file in *; do
+    if [[ "$file" =~ ^(pic.jpg|wall.jpg|wall_blur.jpg)$ ]] || [ -d "$file" ]; then
+        continue
+    fi
+    
+    if [[ "$file" =~ \.(jpg|jpeg|png|webp|fill)$ ]]; then
+        FILE_LIST+="$file\0icon\x1f$WALL_DIR/$file\n"
+    fi
+done
+
+SELECTED=$(echo -e "$FILE_LIST" | rofi -dmenu -i -p "Select Wallpaper" \
+    -show-icons \
+    -theme-str 'window { width: 800px; } 
+                listview { columns: 3; lines: 3; } 
+                element { orientation: vertical; text-align: center; } 
+                element-icon { size: 120px; }' )
+
+if [ -z "$SELECTED" ]; then
+    exit 0
+fi
+
+notify-send "Wallpaper" "Applying $SELECTED..."
+
+cp "$SELECTED" "$TARGET_WALL"
+magick "$SELECTED" -blur 0x25 -quality 95 "$TARGET_BLUR"
+
+hyprctl hyprpaper wallpaper "eDP-1, /home/$(whoami)/Wallpapers/wall.jpg, fill"
+
+notify-send "Wallpaper" "Desktop updated successfully."
