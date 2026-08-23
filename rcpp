@@ -10,6 +10,7 @@ set -euo pipefail
 
 TRG="$PWD/target"
 SRC="$PWD/src"
+EXT="$PWD/external"
 
 # Check if src directory exists
 if [ ! -d "$SRC" ]; then
@@ -19,6 +20,8 @@ fi
 
 # Handle the Raylib Flag
 RAYLIB_FLAGS=""
+IMGUI_FLAGS=""
+RLIMGUI_SRC=""
 if [[ "${1:-}" == "-r" ]]; then
     # Check if pkg-config can actually find raylib
     if ! pkg-config --exists raylib; then
@@ -27,6 +30,12 @@ if [[ "${1:-}" == "-r" ]]; then
     fi
     RAYLIB_FLAGS=$(pkg-config --libs --cflags raylib)
     shift # Remove -r from the arguments list
+
+    if [[ "${1:-}" == "-i" ]]; then
+	IMGUI_FLAGS="-I$EXT/imgui -limgui"
+	RLIMGUI_SRC="$EXT/imgui/rlImGui.cpp"
+	shift # Remove -i from the arguments list
+    fi
 fi
 
 # Check if any arguments are provided
@@ -55,7 +64,7 @@ mkdir -p "$TRG"
 
 # Compile the files
 echo "Compiling $filename..."
-clang++ -Wall -Wextra -std=c++20 -I"$SRC" -o "$TRG/$filename" "${files[@]}" $RAYLIB_FLAGS
+clang++ -Wall -Wextra -std=c++20 -I"$SRC" -o "$TRG/$filename" "${files[@]}" $IMGUI_FLAGS $RLIMGUI_SRC $RAYLIB_FLAGS
 
 # Run the executable
 "$TRG/$filename"
