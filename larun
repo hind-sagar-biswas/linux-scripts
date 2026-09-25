@@ -2,17 +2,39 @@
 
 set -euo pipefail
 
-# --- Functions ---
+
+OCTANE=false
+REVERB=false
+PAIL=false
+QUIET=false
+
+
+while getopts "orpq" opt; do
+  case "$opt" in
+    o) OCTANE=true ;;
+    r) REVERB=true ;;
+    p) PAIL=true ;;
+    q) QUIET=true ;;
+    *) echo "Usage: $0 [-o] [-r] [-p] [-q] [project_name]" >&2; exit 1 ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
 
 ask_choice() {
     local prompt="$1"
     local default="$2" 
     local choice
-    
-    read -n 1 -p "$prompt " choice
-    echo "" 
-    
-    choice="${choice:-$default}"
+
+    # Fast track if -q (quiet mode) is set
+    if [[ "$QUIET" == true ]]; then
+        choice="$default"
+    else
+        read -n 1 -p "$prompt " choice
+        echo "" 
+        choice="${choice:-$default}"
+    fi
 
     if [[ "$choice" =~ ^[Yy]$ ]]; then
         return 0 # True
@@ -24,12 +46,9 @@ ask_choice() {
 check_and_install_dependencies() {
     local missing_deps=()
     
-    # Check for kitty
     command -v kitty &>/dev/null || missing_deps+=("kitty")
-    # Check for core binaries
     command -v php &>/dev/null || missing_deps+=("php")
     command -v composer &>/dev/null || missing_deps+=("composer")
-    # Laravel often needs unzip and curl for composer to work correctly
     command -v unzip &>/dev/null || missing_deps+=("unzip")
     command -v curl &>/dev/null || missing_deps+=("curl")
 
@@ -39,7 +58,6 @@ check_and_install_dependencies() {
 
     echo "Missing dependencies: ${missing_deps[*]}"
     
-    # Detect Package Manager
     if command -v pacman &>/dev/null; then
         echo "Detected Arch-based system (pacman)."
         sudo pacman -Sy --noconfirm "${missing_deps[@]}"
@@ -58,13 +76,11 @@ check_and_install_dependencies() {
 
 check_and_install_dependencies
 
-
 # --- Configuration ---
 
 BASE_DIR="$HOME/Laravel"
 PROJECT_NAME="${1:-}"
 
-# --- Project Setup Logic ---
 
 if [[ -z "$PROJECT_NAME" ]]; then
     echo "No project name provided. Using current directory: $PWD"
@@ -93,14 +109,13 @@ cd "$TARGET_DIR"
 [[ ! -f "artisan" ]] && { echo "Error: artisan not found"; exit 1; }
 [[ ! -d "vendor" ]] && composer install
 
-# --- Decision Phase ---
 
 RUN_SERVER=false
 RUN_DEV=false
 RUN_MAILPIT=false
 RUN_QUEUE=false
 
-if ask_choice "Run Artisan serve? (Y/n)" "y"; then
+if ask_choice "Run HTTP server? (Y/n)" "Y"; then
     RUN_SERVER=true
 fi
 
@@ -121,8 +136,6 @@ if ask_choice "Run Queue Worker? (Y/n)" "Y"; then
     RUN_QUEUE=true
 fi
 
-# --- Execution Phase ---
-# Now we launch everything based on the stored choices
 
 echo "Launching services..."
 
@@ -141,11 +154,23 @@ if [ "$RUN_QUEUE" = true ]; then
     kitty --hold php artisan queue:work 2>/dev/null &
 fi
 
-# Finally, run the server in the foreground of the current shell
-if [ "$RUN_SERVER" = true ]; then
-    echo "---------------------------------------"
-    echo "Starting Laravel Development Server..."
-    php artisan serve
+if [ "$REVERB" = true ]; then
+    echo "-> Starting Laravel Reverb..."
+    kitty --hold php artisan reverb:start 2>/dev/null &
 fi
 
+if [ "$PAIL" = true ]; then
+    echo "-> Starting Laravel Pail..."
+    kitty --hold php artisan pail --timeout=0 2>/dev/null &
+fi
 
+if [ "$RUN_SERVER" = true ]; then
+    echo "---------------------------------------"
+    if [ "$OCTANE" = true ]; then
+        echo "Starting Laravel Octane Server..."
+        php artisan octane:start --port=8000 --workers=4 --max-requests=500
+    else
+        echo "Starting Laravel Development Server..."
+        php artisan serve
+    fi
+fi
